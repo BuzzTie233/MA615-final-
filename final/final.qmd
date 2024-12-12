@@ -1,0 +1,269 @@
+---
+title: "Untitled"
+format: pptx
+editor: visual
+editor_options: 
+  chunk_output_type: inline
+---
+
+## Quarto
+
+Quarto enables you to weave together content and executable code into a finished document. To learn more about Quarto see <https://quarto.org>.
+
+## Running Code
+
+```{r echo=FALSE,message=FALSE,warning=FALSE}
+library(tidyverse)
+library(ggplot2)
+library(shiny)
+library(leaflet)
+library(leaflet.extras)
+library(treemap)
+library(treemapify)
+library(gt)
+library(gtExtras)
+```
+
+## interactive map
+
+```{r echo=FALSE,warning=FALSE}
+library(leaflet)
+
+madagascar_coords <- c(-18.7669, 46.8691)
+
+madagascar_map <- leaflet() |>
+  addProviderTiles(providers$OpenStreetMap) |> 
+  setView(lng = madagascar_coords[2], lat = madagascar_coords[1], zoom = 6) |> 
+  addMarkers(lng = 47.5361, lat = -18.8792, 
+             popup = "City: Antananarivo<br>Capital of Madagascar") |> 
+  addMarkers(lng = 48.2732, lat = -13.0027, 
+             popup = "City: Diego Suarez<br>Major Port City") |> 
+  addMarkers(lng = 49.3832, lat = -17.8239, 
+             popup = "City: Toamasina<br>Second largest city") |> 
+  addMarkers(lng = madagascar_coords[2], lat = madagascar_coords[1], 
+             popup = "Country: Madagascar<br>Capital: Antananarivo") |> 
+  addLabelOnlyMarkers(lng = madagascar_coords[2], lat = madagascar_coords[1],
+                      label = "Country: Madagascar, Capital: Antananarivo",
+                      labelOptions = labelOptions(noHide = TRUE, 
+                                                  direction = 'auto', 
+                                                  offset = c(-100, -10)))
+
+madagascar_map
+
+
+```
+
+The `echo: false` option disables the printing of code (only output is displayed).
+
+## Scope of Madagascar
+
+```{r}
+library(leaflet)
+
+madagascar_Antananarivo <- c(-18.8792, 47.5079)  
+
+madagascar_map_world <- leaflet() |> 
+  addProviderTiles(providers$Esri.NatGeoWorldMap) |> 
+  setView(lng = madagascar_Antananarivo[2], lat = madagascar_Antananarivo[1], zoom = 6) |> 
+  addCircles(lng = madagascar_Antananarivo[2], lat = madagascar_Antananarivo[1],
+             radius = 800000,               
+             color = '#D90429',            
+             fillColor = '#D90429',        
+             fillOpacity = 0.7,           
+             weight = 2,                  
+             dashArray = '5, 5',          
+             popup = "Capital: Antananarivo") 
+
+madagascar_map_world
+
+```
+
+## Economic and demographic analysis
+
+```{r echo=FALSE,warning=FALSE,message=FALSE}
+# Read the CSV file and skip the first 4 lines
+madagascar_data <- read_csv("data_new/df993292-7ac5-4c8b-9730-79a2610df483_Data.csv")
+
+```
+
+```{r}
+colnames(madagascar_data)[5:ncol(madagascar_data)] <- gsub("\\s\\[YR\\d{4}\\]", "", colnames(madagascar_data)[5:ncol(madagascar_data)])
+
+```
+
+```{r echo=FALSE,warning=FALSE}
+# A list of selected indicators
+selected_indicators <- c('GDP (current US$)', 'GDP growth (annual %)', 
+                         'GDP per capita (current US$)', 
+                         'GDP per capita growth (annual %)',
+                         'Imports of goods and services (current US$)', 
+                         'Exports of goods and services (current US$)', 
+                         'Population, total', 'Population growth (annual %)', 
+                         'Travel services (% of commercial service exports)',
+                         'Population, female (% of total population)',
+                         'Population, male (% of total population)',
+                         'Life expectancy at birth, total (years)')
+
+# Filter data
+filtered_data <- madagascar_data |> 
+                 filter(`Series Name` %in% selected_indicators) |> 
+                 select(-c(`Country Name`, `Country Code`, `Series Code`))
+
+# Convert data to long format
+long_data <- filtered_data |> 
+             pivot_longer(cols = `1974`:`2019`, names_to = "Year", values_to = "Value") |> 
+             mutate(Year = as.numeric(Year))  # Convert year to numeric
+```
+
+```{r,show_col_types = FALSE}
+# Load required libraries
+library(ggplot2)
+library(tidyr)
+library(dplyr)
+library(readr)
+
+# 1. Load and process the data
+madagascar_data <- read_csv("data_new/df993292-7ac5-4c8b-9730-79a2610df483_Data.csv")
+
+# 2. Clean column names
+colnames(madagascar_data)[5:ncol(madagascar_data)] <- gsub("\\s\\[YR\\d{4}\\]", "", colnames(madagascar_data)[5:ncol(madagascar_data)])
+
+# 3. Filter population-related indicators
+filtered_data <- madagascar_data |> 
+  filter(`Series Name` %in% c('Population, total', 'Population growth (annual %)', 'Life expectancy at birth, total (years)')) |> 
+  select(-c(`Country Name`, `Country Code`, `Series Code`))
+
+# 4. Reshape data from wide to long format
+long_data <- filtered_data |> 
+  pivot_longer(cols = `1974`:`2019`, names_to = "Year", values_to = "Value") |> 
+  mutate(
+    Year = as.numeric(Year), 
+    Value = as.numeric(gsub("[^0-9.-]", "", Value))
+  )
+
+# 5. Plot population total change trend
+population_total <- long_data |> 
+  filter(`Series Name` == 'Population, total')
+
+ggplot(population_total, aes(x = Year, y = Value)) +
+  geom_line(color = "#0077B6") +
+  labs(title = "Population Change Trend (1974-2019)", x = "Year", y = "Total Population") +
+  theme_minimal()
+
+# 6. Plot life expectancy change trend
+life_expectancy <- long_data |> 
+  filter(`Series Name` == 'Life expectancy at birth, total (years)')
+
+ggplot(life_expectancy, aes(x = Year, y = Value)) +
+  geom_line(color = "#6A0572") +
+  labs(title = "Life Expectancy Trend (1974-2019)", x = "Year", y = "Life Expectancy (Years)") +
+  theme_minimal()
+
+```
+
+```         
+```
+
+```{r}
+# Load required libraries
+library(ggplot2)
+library(tidyr)
+library(dplyr)
+library(readr)
+
+# 1. Load and process the data
+madagascar_data <- read_csv("data_new/df993292-7ac5-4c8b-9730-79a2610df483_Data.csv")
+
+# 2. Clean column names
+colnames(madagascar_data)[5:ncol(madagascar_data)] <- gsub("\\s\\[YR\\d{4}\\]", "", colnames(madagascar_data)[5:ncol(madagascar_data)])
+
+# 3. Filter economic-related indicators
+filtered_data <- madagascar_data |> 
+  filter(`Series Name` %in% c('GDP (current US$)', 'GDP growth (annual %)', 'GDP per capita (current US$)')) |> 
+  select(-c(`Country Name`, `Country Code`, `Series Code`))
+
+# 4. Reshape data from wide to long format
+long_data <- filtered_data |> 
+  pivot_longer(cols = `1974`:`2019`, names_to = "Year", values_to = "Value") |> 
+  mutate(
+    Year = as.numeric(Year), 
+    Value = as.numeric(gsub("[^0-9.-]", "", Value))
+  )
+
+# 5. Plot GDP total change trend
+gdp_total <- long_data |> 
+  filter(`Series Name` == 'GDP (current US$)')
+
+ggplot(gdp_total, aes(x = Year, y = Value / 1e9)) +  # Convert GDP to billions
+  geom_line(color = "#D00000") +
+  labs(title = "GDP Total Change Trend (1974-2019)", x = "Year", y = "GDP (Billion USD)") +
+  theme_minimal()
+
+# 6. Plot GDP growth rate change trend
+gdp_growth <- long_data |> 
+  filter(`Series Name` == 'GDP growth (annual %)')
+
+ggplot(gdp_growth, aes(x = Year, y = Value)) +
+  geom_line(color = "#009900") +
+  labs(title = "GDP Growth Rate Change Trend (1974-2019)", x = "Year", y = "Growth Rate (%)") +
+  theme_minimal()
+
+```
+
+```{r}
+# Load required libraries
+library(gridExtra)
+library(grid)
+
+# 1. Define SWOT content
+strengths <- c(
+  "One of the world's top biodiversity hotspots",
+  "Unique natural heritage: more than 80% of Madagascar's flora and fauna are endemic",
+  "Coastal tourism attractions"
+)
+
+weaknesses <- c(
+  "Lack of supportive policies and regulations",
+  "Unfavorable investment climate for tourism development",
+  "Poor airline connectivity",
+  "Inadequately skilled labor force"
+)
+
+opportunities <- c(
+  "Investment finance through the 'Funds for the Promotion of Private Business'",
+  "Tourism product diversification (e.g., adventure, special interest tourism, etc.)",
+  "Establishment of ecotourism investment zones",
+  "Emerging markets in Africa and Asia"
+)
+
+threats <- c(
+  "Lack of an 'open skies' policy",
+  "Perception of poor governance and political instability",
+  "Environmental degradation and deforestation",
+  "Impact of climate change",
+  "Vulnerability to natural disasters (e.g., drought, cyclones, floods, etc.)"
+)
+
+# 2. Create SWOT tables
+strengths_table <- tableGrob(matrix(strengths, ncol = 1), 
+                             theme = ttheme_default(core=list(fg_params=list(fontsize=10))))
+
+weaknesses_table <- tableGrob(matrix(weaknesses, ncol = 1), 
+                              theme = ttheme_default(core=list(fg_params=list(fontsize=10))))
+
+opportunities_table <- tableGrob(matrix(opportunities, ncol = 1), 
+                                 theme = ttheme_default(core=list(fg_params=list(fontsize=10))))
+
+threats_table <- tableGrob(matrix(threats, ncol = 1), 
+                           theme = ttheme_default(core=list(fg_params=list(fontsize=10))))
+
+# 3. Arrange SWOT components into a 2x2 grid
+grid.arrange(
+  arrangeGrob(strengths_table, top = textGrob("Strengths", gp = gpar(fontsize = 14, fontface = "bold"))),
+  arrangeGrob(weaknesses_table, top = textGrob("Weaknesses", gp = gpar(fontsize = 14, fontface = "bold"))),
+  arrangeGrob(opportunities_table, top = textGrob("Opportunities", gp = gpar(fontsize = 14, fontface = "bold"))),
+  arrangeGrob(threats_table, top = textGrob("Threats", gp = gpar(fontsize = 14, fontface = "bold"))),
+  nrow = 2
+)
+
+```
